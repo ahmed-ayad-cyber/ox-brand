@@ -1,7 +1,7 @@
-// عدّل القيم دي بس
 const CONFIG = {
-  FB_URL: "https://facebook.com/ضع-رابط-صفحتك",
-  WA_NUMBER: "201000000000", // رقم الواتس بالكود الدولي بدون + أو أصفار
-  GH_OWNER: "اسم-حسابك-على-جيت-هاب",
-  GH_REPO: "اسم-الريبو"
+  FB_URL: "https://www.facebook.com/share/1FxcrsQb7G/",
+  WA_NUMBER: "201021303656",
+  ADDRESS_URL: "https://maps.app.goo.gl/heJgxnFb25imL27q6?g_st=aw", // حط هنا لينك العنوان من جوجل ماب (سيبه فاضي لحد ما تجهزه)
+  GH_OWNER: "ahmed-ayad-cyber",
+  GH_REPO: "ox-brand"
 };

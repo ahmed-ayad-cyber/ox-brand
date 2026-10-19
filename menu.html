@@ -17,12 +17,39 @@
         <div class="tag">STYLE • GIFT • YOU</div>
         <div class="sep">— ♡ —</div>
         <div id="list">جاري التحميل...</div>
-        <div class="foot">📍 بجانب البنك الزراعي</div><a class="back" href="index.html">← رجوع</a>
+        <a class="foot" id="addr">📍 بجانب البنك الزراعي</a>
+        <a class="back" href="index.html">← رجوع</a>
     </div>
+    <script src="config.js"></script>
     <script>
-        fetch("menu.json?t=" + Date.now()).then(r => r.json()).then(d => {
-            list.innerHTML = d.items.map(i => '<div class="row"><span>' + i.name + '</span><span class="price">' + i.price + '</span></div>').join("");
-        }).catch(() => list.textContent = "تعذر تحميل المينو");
+        let items = [], qty = [];
+        const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+        if (CONFIG.ADDRESS_URL) { addr.href = CONFIG.ADDRESS_URL; addr.target = "_blank"; addr.rel = "noopener"; }
+
+        function draw() {
+            list.innerHTML = items.map((i, k) =>
+                '<div class="row">' +
+                '<span class="name">' + esc(i.name) + '</span>' +
+                '<span class="price">' + i.price + '</span>' +
+                '<span class="qty"><button onclick="chg(' + k + ',1)">+</button><b>' + qty[k] + '</b><button onclick="chg(' + k + ',-1)">−</button></span>' +
+                '<button class="ord" onclick="order(' + k + ')">اطلب</button>' +
+                '</div>'
+            ).join("");
+        }
+
+        function chg(k, d) { qty[k] = Math.max(1, qty[k] + d); draw(); }
+
+        function order(k) {
+            const i = items[k], q = qty[k];
+            const msg = "طلب جديد:\n• " + i.name + " × " + q + "\nالإجمالي: " + (i.price * q) + " جنيه";
+            window.open("https://wa.me/" + CONFIG.WA_NUMBER + "?text=" + encodeURIComponent(msg), "_blank");
+        }
+
+        fetch("menu.json?t=" + Date.now())
+            .then(r => r.json())
+            .then(d => { items = d.items; qty = items.map(() => 1); draw(); })
+            .catch(() => list.textContent = "تعذر تحميل المينو");
     </script>
 </body>
 

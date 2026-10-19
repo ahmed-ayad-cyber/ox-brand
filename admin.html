@@ -1,53 +1,83 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width,initial-scale=1">
-        <link
-            href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Playfair+Display:wght@500&display=swap"
-            rel="stylesheet">
-        <link rel="stylesheet" href="style.css">
-        <meta name="robots" content="noindex">
-        <title>لوحة الأدمن</title>
-    </head>
 
-    <body>
-        <div class="wrap">
-            <h1 class="logo" style="font-size:52px">OX</h1>
-            <h2>لوحة الأدمن</h2>
-            <div class="card"><b>التوكن (مرة واحدة على جهازك)</b>
-                <input id="tok" type="password" placeholder="GitHub Token"><button onclick="saveTok()">حفظ</button>
-            </div>
-            <div class="card"><b>إضافة منتج</b>
-                <input id="n" placeholder="اسم المنتج"><input id="p" type="number" placeholder="السعر">
-                <button onclick="add()">إضافة وحفظ</button>
-            </div>
-            <div id="msg"></div>
-            <div id="list"></div><a class="back" href="menu.html">عرض المينو</a>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Playfair+Display:wght@500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <meta name="robots" content="noindex">
+    <title>لوحة الأدمن</title>
+    <style>
+        #list .row {
+            grid-template-columns: 1fr auto;
+            grid-template-areas: none
+        }
+
+        #list .row span {
+            grid-area: auto
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <h1 class="logo" style="font-size:52px">OX</h1>
+        <h2>لوحة الأدمن</h2>
+        <div class="card"><b>التوكن (مرة واحدة على جهازك)</b>
+            <input id="tok" type="password" placeholder="GitHub Token">
+            <button onclick="saveTok()">حفظ</button>
         </div>
-        <script src="config.js"></script>
-        <script>
-            const api = "https://api.github.com/repos/" + CONFIG.GH_OWNER + "/" + CONFIG.GH_REPO + "/contents/menu.json";
-            let items = [], sha = "";
-            const H = () => ({Authorization: "Bearer " + localStorage.oxtok, Accept: "application/vnd.github+json"});
-            const say = t => msg.textContent = t;
-            function saveTok() {localStorage.oxtok = tok.value.trim(); tok.value = ""; say("تم حفظ التوكن"); load()}
-            async function load() {
-                if (!localStorage.oxtok) {say("ادخل التوكن أولاً"); return }
-                const r = await fetch(api + "?t=" + Date.now(), {headers: H()});
-                if (!r.ok) {say("خطأ: تأكد من التوكن واسم الريبو"); return }
-                const j = await r.json(); sha = j.sha;
-                items = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g, ""))))).items; draw(); say("");
-            }
-            function draw() {list.innerHTML = items.map((i, k) => '<div class="row"><span>' + i.name + ' - ' + i.price + '</span><button class="del" onclick="del(' + k + ')">حذف</button></div>').join("")}
-            async function save() {
-                const body = {message: "update menu", sha, content: btoa(unescape(encodeURIComponent(JSON.stringify({items}, null, 2))))};
-                const r = await fetch(api, {method: "PUT", headers: H(), body: JSON.stringify(body)});
-                if (r.ok) {sha = (await r.json()).content.sha; say("تم الحفظ ✔ (يظهر للزبائن خلال دقايق)")} else say("فشل الحفظ");
-            }
-            function add() {if (!n.value || !p.value) return; items.push({name: n.value.trim(), price: +p.value}); n.value = p.value = ""; draw(); save()}
-            function del(k) {if (confirm("متأكد؟")) {items.splice(k, 1); draw(); save()} }
-            load();
-        </script>
-    </body>
+        <div class="card"><b>إضافة منتج</b>
+            <input id="n" placeholder="اسم المنتج">
+            <input id="p" type="number" placeholder="السعر">
+            <button onclick="add()">إضافة وحفظ</button>
+        </div>
+        <div id="msg"></div>
+        <div id="list"></div>
+        <a class="back" href="menu.html">عرض المينو</a>
+    </div>
+    <script src="config.js"></script>
+    <script>
+        const api = "https://api.github.com/repos/" + CONFIG.GH_OWNER + "/" + CONFIG.GH_REPO + "/contents/menu.json";
+        let items = [], sha = "";
+        const H = () => ({ Authorization: "Bearer " + localStorage.oxtok, Accept: "application/vnd.github+json" });
+        const say = t => msg.textContent = t;
+        const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+        function saveTok() { localStorage.oxtok = tok.value.trim(); tok.value = ""; say("تم حفظ التوكن"); load(); }
+
+        async function load() {
+            if (!localStorage.oxtok) { say("ادخل التوكن أولاً"); return; }
+            const r = await fetch(api + "?t=" + Date.now(), { headers: H() });
+            if (!r.ok) { say("خطأ: تأكد من التوكن واسم الريبو"); return; }
+            const j = await r.json(); sha = j.sha;
+            items = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g, ""))))).items;
+            draw(); say("");
+        }
+
+        function draw() {
+            list.innerHTML = items.map((i, k) =>
+                '<div class="row"><span>' + esc(i.name) + ' - ' + i.price + '</span><button class="del" onclick="del(' + k + ')">حذف</button></div>'
+            ).join("");
+        }
+
+        async function save() {
+            const body = { message: "update menu", sha, content: btoa(unescape(encodeURIComponent(JSON.stringify({ items }, null, 2)))) };
+            const r = await fetch(api, { method: "PUT", headers: H(), body: JSON.stringify(body) });
+            if (r.ok) { sha = (await r.json()).content.sha; say("تم الحفظ ✔ (يظهر للزبائن خلال دقايق)"); } else say("فشل الحفظ");
+        }
+
+        function add() {
+            if (!n.value || !p.value) return;
+            items.push({ name: n.value.trim(), price: +p.value });
+            n.value = p.value = ""; draw(); save();
+        }
+        function del(k) { if (confirm("متأكد؟")) { items.splice(k, 1); draw(); save(); } }
+        load();
+    </script>
+</body>
+
 </html>
